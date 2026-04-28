@@ -1,0 +1,24 @@
+# Development Dockerfile Template for Microservices
+# Copy this to each service folder and customize if needed
+
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json package-lock.json* ./
+
+# Install dependencies
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Build TypeScript (if applicable)
+RUN npm run build || true
+
+# Expose port (will be overridden by docker-compose)
+EXPOSE 3000
+
+# Start application
+CMD ["npm", "start"]

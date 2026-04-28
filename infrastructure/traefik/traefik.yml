@@ -1,0 +1,32 @@
+# Traefik Configuration
+# API Gateway for The Everything Shop Microservices
+
+api:
+  # Insecure API (only for development)
+  insecure: true
+  dashboard: true
+
+entryPoints:
+  web:
+    address: ':80'
+
+providers:
+  docker:
+    endpoint: 'unix:///var/run/docker.sock'
+    exposedByDefault: false
+    network: microservices
+  file:
+    filename: /traefik.yml
+    watch: true
+
+# Global configuration
+global:
+  checkNewVersion: true
+  sendAnonymousUsage: false
+
+log:
+  level: INFO
+  format: json
+
+accessLog:
+  format: json

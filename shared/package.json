@@ -1,0 +1,65 @@
+{
+  "name": "@teleshop/common",
+  "version": "1.0.0",
+  "description": "Shared library for The Everything Shop microservices",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./errors": {
+      "import": "./dist/errors/index.js",
+      "types": "./dist/errors/index.d.ts"
+    },
+    "./middleware": {
+      "import": "./dist/middleware/index.js",
+      "types": "./dist/middleware/index.d.ts"
+    },
+    "./rabbitmq": {
+      "import": "./dist/rabbitmq/index.js",
+      "types": "./dist/rabbitmq/index.d.ts"
+    },
+    "./events": {
+      "import": "./dist/events/index.js",
+      "types": "./dist/events/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "lint": "eslint src --ext .ts",
+    "test": "jest"
+  },
+  "keywords": [
+    "microservices",
+    "shared",
+    "teleshop"
+  ],
+  "author": "The Everything Shop",
+  "license": "MIT",
+  "dependencies": {
+    "amqplib": "^0.10.4",
+    "express": "^5.0.0",
+    "express-validator": "^7.0.0",
+    "jsonwebtoken": "^9.1.2",
+    "pino": "^8.16.2"
+  },
+  "devDependencies": {
+    "@types/amqplib": "^0.10.5",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.10.5",
+    "@typescript-eslint/eslint-plugin": "^6.16.0",
+    "@typescript-eslint/parser": "^6.16.0",
+    "eslint": "^8.56.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.3.3"
+  }
+}
