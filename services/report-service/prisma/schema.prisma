@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Report {
+  id        String   @id @default(uuid())
+  name      String   @db.VarChar(255)
+  type      ReportType
+  period    ReportPeriod
+  startDate DateTime
+  endDate   DateTime
+  
+  // Data aggregation
+  dataSource  String   @default("events") // Source of data (events, database snapshot, etc.)
+  eventTypes  String[] @default([]) // Which event types were aggregated
+  
+  // Report specifics
+  totalRecords Int     @default(0)
+  metrics      Metric[]
+  
+  // Configuration
+  filters     Json? // Optional filters applied
+  createdBy   String @db.Uuid // Admin/system user who created
+  
+  // Metadata
+  status      ReportStatus @default(COMPLETED)
+  description String?      @db.VarChar(500)
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([type])
+  @@index([period])
+  @@index([createdAt])
+  @@index([createdBy])
+}
+
+model Metric {
+  id         String   @id @default(uuid())
+  reportId   String   @db.Uuid
+  report     Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  
+  // Metric information
+  metricName String   @db.VarChar(100)
+  value      Decimal  @db.Decimal(15, 2)
+  unit       String   @db.VarChar(50) // e.g., VND, count, percentage, ratio
+  
+  // Additional data
+  metadata   Json?    // breakdown data, comparisons, etc.
+  
+  // Timestamps
+  createdAt  DateTime @default(now())
+  
+  @@index([reportId])
+  @@index([metricName])
+}
+
+// Enums
+enum ReportType {
+  SALES           // Revenue, sales metrics
+  ORDERS          // Order counts, fulfillment
+  USERS           // User activity, registration
+  PAYMENTS        // Payment success rates, gateway analysis
+  INVENTORY       // Stock levels, product movement
+  RETURNS         // Return rates, reasons
+  REVIEWS         // Review counts, ratings
+  CUSTOM          // User-defined reports
+}
+
+enum ReportPeriod {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+  CUSTOM
+}
+
+enum ReportStatus {
+  PENDING     // Still aggregating data
+  COMPLETED   // Ready for view
+  FAILED      // Error during generation
+  ARCHIVED    // Old report, still accessible
+}

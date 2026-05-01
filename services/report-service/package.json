@@ -1,0 +1,44 @@
+{
+  "name": "report-service",
+  "version": "1.0.0",
+  "description": "Report Service - Analytics and reporting aggregation",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "lint": "eslint src/**/*.ts",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:seed": "tsx prisma/seed.ts",
+    "prisma:studio": "prisma studio"
+  },
+  "keywords": [
+    "report",
+    "analytics",
+    "aggregation"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "^5.7.1",
+    "@teleshop/common": "file:../../shared",
+    "express": "^5.0.0",
+    "express-validator": "^7.0.0",
+    "pino": "^8.16.2",
+    "pino-http": "^8.5.1"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.20",
+    "@types/jest": "^29.5.8",
+    "@types/node": "^20.10.0",
+    "eslint": "^8.54.0",
+    "jest": "^29.7.0",
+    "prisma": "^5.7.1",
+    "ts-jest": "^29.1.1",
+    "tsx": "^4.6.2",
+    "typescript": "^5.3.3"
+  }
+}
