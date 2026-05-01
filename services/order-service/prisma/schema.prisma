@@ -1,0 +1,111 @@
+// This is your Prisma schema file for Order Service
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Order Status: PENDING -> CONFIRMED -> SHIPPED -> DELIVERED or CANCELLED
+model Order {
+  id              String      @id @default(cuid())
+  orderNumber     String      @unique @db.VarChar(50)
+  userId          String      @db.VarChar(255) // Reference to Auth Service user
+  status          OrderStatus @default(PENDING)
+  paymentStatus   PaymentStatus @default(PENDING)
+  
+  // Pricing
+  subtotal        Float       @db.Double // Sum of items
+  shippingCost    Float       @db.Double @default(0)
+  tax             Float       @db.Double @default(0)
+  total           Float       @db.Double // subtotal + shipping + tax
+  
+  // Shipping & Billing
+  shippingAddress Json        // { fullName, phoneNumber, street, district, city, country }
+  billingAddress  Json?       // Optional, can be same as shipping
+  notes           String?     @db.Text
+  
+  // Relations
+  items           OrderItem[]
+  returns         Return[]
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  @@index([userId])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([createdAt])
+}
+
+// Order Items - Line items in order
+model OrderItem {
+  id              String      @id @default(cuid())
+  orderId         String      @db.VarChar(255)
+  productId       String      @db.VarChar(255) // Reference to Catalog Service product
+  productName     String      @db.VarChar(500) // Denormalized for history
+  productSku      String      @db.VarChar(100) // Denormalized for history
+  quantity        Int         @db.Integer
+  unitPrice       Float       @db.Double      // Price at time of order
+  discount        Float       @db.Double @default(0) // Applied discount
+  subtotal        Float       @db.Double      // (unitPrice - discount) * quantity
+  
+  // Relations
+  order           Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  @@unique([orderId, productId])
+  @@index([orderId])
+  @@index([productId])
+}
+
+// Returns/Refunds
+model Return {
+  id              String      @id @default(cuid())
+  orderId         String      @db.VarChar(255)
+  returnNumber    String      @unique @db.VarChar(50)
+  items           String[]    @db.VarChar(255) // Array of productIds to return
+  reason          String      @db.Text
+  status          ReturnStatus @default(PENDING)
+  refundAmount    Float       @db.Double      // Amount to refund
+  notes           String?     @db.Text
+  
+  // Relations
+  order           Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  @@index([orderId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Enums
+enum OrderStatus {
+  PENDING          // Order created, awaiting confirmation
+  CONFIRMED        // Payment confirmed
+  SHIPPED          // Order dispatched
+  DELIVERED        // Order received by customer
+  CANCELLED        // Order cancelled
+}
+
+enum PaymentStatus {
+  PENDING          // Awaiting payment
+  COMPLETED        // Payment received
+  FAILED           // Payment failed
+  REFUNDED         // Refunded to customer
+}
+
+enum ReturnStatus {
+  PENDING          // Return requested
+  APPROVED         // Return approved
+  COMPLETED        // Return processed and refunded
+  REJECTED         // Return rejected
+}
