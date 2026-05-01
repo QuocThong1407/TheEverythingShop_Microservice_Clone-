@@ -1,0 +1,102 @@
+// This is your Prisma schema file.
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AddressType {
+  HOME
+  WORK
+  OTHER
+}
+
+enum MembershipTier {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+}
+
+model UserProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  firstName String?
+  lastName  String?
+  phone     String?
+  avatar    String?
+  bio       String?
+  
+  // Membership information
+  membershipTier MembershipTier @default(BRONZE)
+  joinedAt   DateTime @default(now())
+  
+  // Statistics
+  totalSpent    Float    @default(0)
+  totalOrders   Int      @default(0)
+  totalReviews  Int      @default(0)
+  
+  // Preferences
+  emailNotifications  Boolean @default(true)
+  smsNotifications    Boolean @default(false)
+  marketingEmails     Boolean @default(true)
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  addresses Address[]
+  preferences Preference?
+  
+  @@map("user_profiles")
+}
+
+model Address {
+  id          String   @id @default(cuid())
+  profileId   String
+  profile     UserProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  
+  type        AddressType
+  label       String?
+  
+  fullName    String
+  phoneNumber String
+  
+  street      String
+  streetNumber String
+  district    String
+  ward        String
+  city        String
+  zipCode     String
+  country     String @default("VN")
+  
+  isDefault   Boolean @default(false)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("addresses")
+}
+
+model Preference {
+  id          String   @id @default(cuid())
+  profileId   String   @unique
+  profile     UserProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  
+  currency    String   @default("VND")
+  timezone    String   @default("Asia/Ho_Chi_Minh")
+  language    String   @default("vi")
+  
+  theme       String   @default("light")
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("preferences")
+}
