@@ -1,0 +1,68 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Payment {
+  id                  String      @id @default(uuid())
+  orderId             String      @unique
+  userId              String      @indexed
+  amount              Decimal     @db.Decimal(12, 2)
+  currency            String      @default("VND")
+  status              PaymentStatus @default(PENDING)
+  paymentMethod       String      // VNPAY, STRIPE, MOMO, CARD
+  transactionId       String?     @unique
+  gatewayResponse     Json?
+  metadata            Json?
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+  expiresAt           DateTime?
+
+  refunds             Refund[]
+
+  @@map("payments")
+}
+
+model Refund {
+  id                  String      @id @default(uuid())
+  paymentId           String      @indexed
+  payment             Payment     @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  orderId             String      @indexed
+  userId              String      @indexed
+  amount              Decimal     @db.Decimal(12, 2)
+  reason              String
+  status              RefundStatus @default(PENDING)
+  refundTransactionId String?     @unique
+  gatewayResponse     Json?
+  metadata            Json?
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  @@map("refunds")
+}
+
+enum PaymentStatus {
+  PENDING
+  AUTHORIZED
+  CAPTURED
+  COMPLETED
+  FAILED
+  CANCELLED
+  EXPIRED
+}
+
+enum RefundStatus {
+  PENDING
+  INITIATED
+  PROCESSING
+  COMPLETED
+  FAILED
+  REJECTED
+}
