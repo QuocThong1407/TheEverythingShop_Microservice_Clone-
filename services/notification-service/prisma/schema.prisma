@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Template {
+  id        String   @id @default(uuid())
+  name      String   @db.VarChar(100) @unique
+  eventType String   @db.VarChar(100) // USER_REGISTERED, PAYMENT_SUCCESS, etc.
+  
+  // Email configuration
+  subject   String   @db.VarChar(255)
+  body      String   @db.Text // HTML email body
+  
+  // Template variables: {{userName}}, {{orderTotal}}, etc.
+  variables String[] @default([]) // List of available variables
+  
+  // Control
+  isActive  Boolean  @default(true)
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Notifications using this template
+  notifications Notification[]
+  
+  @@index([eventType])
+  @@index([isActive])
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  templateId  String   @db.Uuid
+  template    Template @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  
+  // Recipient
+  userId      String   @db.Uuid
+  email       String   @db.VarChar(255)
+  
+  // Event triggering notification
+  eventId     String   @db.Uuid
+  eventType   String   @db.VarChar(100) // USER_REGISTERED, PAYMENT_SUCCESS, etc.
+  
+  // Email content
+  subject     String   @db.VarChar(255)
+  body        String   @db.Text
+  
+  // Send tracking
+  status      NotificationStatus @default(PENDING)
+  sentAt      DateTime?
+  openedAt    DateTime?
+  
+  // Error tracking
+  errorMessage String?  @db.VarChar(500)
+  retryCount   Int      @default(0)
+  maxRetries   Int      @default(3)
+  
+  // Metadata
+  metadata    Json?
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([email])
+  @@index([eventType])
+  @@index([status])
+  @@index([createdAt])
+  @@index([sentAt])
+}
+
+enum NotificationStatus {
+  PENDING       // Waiting to be sent
+  SENDING       // In progress
+  SENT          // Successfully sent
+  FAILED        // Permanent failure
+  BOUNCED       // Email invalid
+  UNSUBSCRIBED  // User unsubscribed
+}
