@@ -1,0 +1,97 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== CATEGORY ====================
+model Category {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  description String?
+  image     String?
+  products  Product[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+}
+
+// ==================== PRODUCT ====================
+model Product {
+  id            String   @id @default(cuid())
+  name          String
+  description   String
+  sku           String   @unique
+  price         Float
+  costPrice     Float?
+  stock         Int      @default(0)
+  status        String   @default("ACTIVE") // ACTIVE, INACTIVE, DISCONTINUED
+  sellerId      String   // Reference to Auth Service user (not FK)
+  categoryId    String
+  category      Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  image         String?
+  images        String[] // JSON array of image URLs
+  attributes    Json?    // JSON object for color, size, etc.
+  rating        Float    @default(0)
+  ratingCount   Int      @default(0)
+  reviewCount   Int      @default(0)
+  reviews       Review[]
+  promotions    Promotion[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([sellerId])
+  @@index([categoryId])
+  @@index([sku])
+  @@index([status])
+}
+
+// ==================== REVIEW ====================
+model Review {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId    String   // Reference to Auth Service user (not FK)
+  rating    Int      @default(5) // 1-5 stars
+  title     String
+  comment   String
+  helpful   Int      @default(0)
+  status    String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productId])
+  @@index([userId])
+  @@index([status])
+}
+
+// ==================== PROMOTION ====================
+model Promotion {
+  id          String    @id @default(cuid())
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  discountType String  @default("PERCENTAGE") // PERCENTAGE, FIXED
+  discountValue Float
+  maxDiscount Float?  // Max discount amount for percentage discounts
+  startDate   DateTime
+  endDate     DateTime
+  active      Boolean  @default(true)
+  usageLimit  Int?
+  usageCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([productId])
+  @@index([active])
+  @@index([startDate, endDate])
+}
